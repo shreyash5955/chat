@@ -15,16 +15,16 @@ app.use(express.static("public"));
 app.get("/create", (req, res) => {
     const roomId = nanoid(6); // Generate 6-char unique code
     rooms[roomId] = []; // Initialize empty chat room
-    res.json({ roomId, inviteLink: `https://your-app-name.herokuapp.com/join/${roomId}` }); // Update with your deployed URL
+    res.json({ roomId, inviteLink: `https://your-app-name.herokuapp.com/join/${roomId}` }); // Replace with your Heroku/Render app name
 });
 
-// Route to join a room (optional, if you want a join link)
+// Route to join a room
 app.get("/join/:roomId", (req, res) => {
     const { roomId } = req.params;
     if (!rooms[roomId]) {
         return res.status(404).send("Room not found!");
     }
-    res.send("Join Room: " + roomId); // Or serve a page that shows the room
+    res.send("Join Room: " + roomId); // Optionally render a join page
 });
 
 io.on("connection", (socket) => {
