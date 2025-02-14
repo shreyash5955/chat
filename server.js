@@ -15,7 +15,16 @@ app.use(express.static("public"));
 app.get("/create", (req, res) => {
     const roomId = nanoid(6); // Generate 6-char unique code
     rooms[roomId] = []; // Initialize empty chat room
-    res.json({ roomId, inviteLink: `http://localhost:3000/join/${roomId}` });
+    res.json({ roomId, inviteLink: `https://your-app-name.herokuapp.com/join/${roomId}` }); // Update with your deployed URL
+});
+
+// Route to join a room (optional, if you want a join link)
+app.get("/join/:roomId", (req, res) => {
+    const { roomId } = req.params;
+    if (!rooms[roomId]) {
+        return res.status(404).send("Room not found!");
+    }
+    res.send("Join Room: " + roomId); // Or serve a page that shows the room
 });
 
 io.on("connection", (socket) => {
@@ -31,7 +40,7 @@ io.on("connection", (socket) => {
     socket.on("send-message", ({ roomId, message }) => {
         if (!rooms[roomId]) return;
         rooms[roomId].push(message); // Store message in session
-        io.to(roomId).emit("receive-message", message);
+        io.to(roomId).emit("receive-message", message); // Broadcast to room
     });
 
     socket.on("disconnecting", () => {
@@ -41,4 +50,8 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(3000, () => console.log("Server running on http://localhost:3000"));
+// Dynamic port handling for Heroku/Render
+const port = process.env.PORT || 3000; // Heroku provides dynamic port via process.env.PORT
+server.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
