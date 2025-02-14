@@ -7,7 +7,8 @@ function createChat() {
         .then(data => {
             alert(`Invite Link: ${data.inviteLink}`);
             joinRoom(data.roomId);
-        });
+        })
+        .catch(err => console.error('Error creating chat:', err));
 }
 
 function joinChat() {
