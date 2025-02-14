@@ -1,37 +1,51 @@
 const socket = io();
-let chatId = null;
+let roomId = null;
 
-document.getElementById("createChat").addEventListener("click", async () => {
-    const res = await fetch("/create");
-    const data = await res.json();
-    chatId = data.chatId;
-    alert(`Share this code to join: ${chatId}`);
-    startChat();
-});
-
-document.getElementById("joinChat").addEventListener("click", () => {
-    const code = document.getElementById("chatCode").value.trim();
-    if (code) {
-        chatId = code;
-        startChat();
-    }
-});
-
-function startChat() {
-    document.getElementById("main").style.display = "none";
-    document.getElementById("chat").style.display = "block";
-    socket.emit("joinChat", chatId);
+function createChat() {
+    fetch("/create")
+        .then(res => res.json())
+        .then(data => {
+            alert(`Invite Link: ${data.inviteLink}`);
+            joinRoom(data.roomId);
+        });
 }
 
-document.getElementById("sendMessage").addEventListener("click", () => {
-    const message = document.getElementById("messageInput").value.trim();
+function joinChat() {
+    const code = document.getElementById("joinCode").value.trim();
+    if (code) joinRoom(code);
+}
+
+function joinRoom(id) {
+    roomId = id;
+    document.getElementById("main").style.display = "none";
+    document.getElementById("chat").style.display = "block";
+    document.getElementById("roomId").innerText = roomId;
+    socket.emit("join-room", roomId);
+}
+
+function sendMessage() {
+    const messageInput = document.getElementById("messageInput");
+    const message = messageInput.value.trim();
     if (message) {
-        socket.emit("sendMessage", message);
-        document.getElementById("messages").innerHTML += `<p><b>You:</b> ${message}</p>`;
-        document.getElementById("messageInput").value = "";
+        socket.emit("send-message", { roomId, message });
+        messageInput.value = "";
     }
+}
+
+socket.on("receive-message", (msg) => {
+    const msgDiv = document.createElement("div");
+    msgDiv.textContent = msg;
+    document.getElementById("messages").appendChild(msgDiv);
 });
 
-socket.on("receiveMessage", (message) => {
-    document.getElementById("messages").innerHTML += `<p><b>Friend:</b> ${message}</p>`;
+socket.on("chat-history", (msgs) => {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+    msgs.forEach(msg => {
+        const msgDiv = document.createElement("div");
+        msgDiv.textContent = msg;
+        messagesDiv.appendChild(msgDiv);
+    });
 });
+
+socket.on("error", (msg) => alert(msg));
